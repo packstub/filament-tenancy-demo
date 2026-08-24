@@ -1,0 +1,58 @@
+# Live-install smoke test.
+#
+# Installs packstub/filament-tenancy from the real Packstub registry into this
+# app on a clean runner, provisions two tenants, and opens each tenant panel.
+# Runs on every push/PR, weekly, and on demand — so a regression in a new
+# Laravel, Filament, stancl/tenancy, or plugin release is caught here first.
+#
+# Secret: COMPOSER_AUTH — {"http-basic":{"packstub.dev":{"username":"pkg_…","password":"…"}}}
+
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 6 * * 1' # Mondays 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  install-and-provision:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sqlite3, pdo_sqlite, intl, mbstring
+          coverage: none
+
+      - name: Install (plugin resolved from packstub.dev)
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Report resolved versions
+        run: composer show laravel/framework filament/filament stancl/tenancy packstub/filament-tenancy | grep -E '^(name|versions)'
+
+      - name: Bootstrap app
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+          touch database/database.sqlite
+
+      - name: Provision demo tenants (seeder runs the full pipeline inline)
+        run: |
+          php artisan migrate:fresh --seed --force --ansi
+          php artisan tenants:list
+          php artisan about --only=filament-tenancy || php artisan about
+
+      - name: Tenant smoke tests (subdomain routing + per-tenant databases)
+        run: php artisan test --compact

@@ -25,3 +25,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Filament assets are published by `filament:upgrade` on composer autoload dump
+/public/css/filament
+/public/js/filament
+/public/fonts/filament

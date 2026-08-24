@@ -1,14 +1,24 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "packstub/filament-tenancy-demo",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Minimal Laravel 13 + Filament 5 app showing database-per-tenant multi-tenancy with packstub/filament-tenancy (stancl/tenancy v4).",
+    "keywords": [
+        "filament",
+        "tenancy",
+        "multi-tenancy",
+        "stancl-tenancy",
+        "multi-database",
+        "demo",
+        "laravel"
+    ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
+        "filament/filament": "^5.0",
         "laravel/framework": "^13.17",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "packstub/filament-tenancy": "@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -34,11 +44,7 @@
     "scripts": {
         "setup": [
             "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install --ignore-scripts",
-            "npm run build"
+            "@composer demo"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -50,7 +56,8 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
@@ -65,6 +72,13 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "demo": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate --ansi --no-interaction",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate:fresh --seed --force --ansi",
+            "@php artisan tenants:list"
         ]
     },
     "extra": {
@@ -82,5 +96,20 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "name": "local-plugin",
+            "type": "path",
+            "url": "../filament-tenancy",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "name": "packstub-filament-tenancy",
+            "type": "composer",
+            "url": "https://packstub.dev/composer/filament-tenancy"
+        }
+    ]
 }
