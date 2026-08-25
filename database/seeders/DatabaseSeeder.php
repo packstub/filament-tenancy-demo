@@ -17,13 +17,15 @@ class DatabaseSeeder extends Seeder
 {
     public const string DEMO_EMAIL = 'demo@example.com';
 
+    public const string DEMO_PASSWORD = 'password';
+
     public function run(): void
     {
         config(['queue.default' => 'sync']);
 
         $owner = User::query()->firstOrCreate(
             ['email' => self::DEMO_EMAIL],
-            ['name' => 'Demo User', 'password' => 'password'],
+            ['name' => 'Demo User', 'password' => self::DEMO_PASSWORD],
         );
 
         $onboarder = app(TenantOnboarder::class);

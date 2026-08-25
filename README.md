@@ -25,7 +25,8 @@ tenants, create a third through the onboarding wizard.
 | `…/admin/projects` | An ordinary Filament resource, isolated per tenant |
 | `…/admin/profile` | Rename the workspace / change its slug and avatar |
 
-Demo login: **demo@example.com** / **password** (owner of both tenants).
+Demo login: **demo@example.com** / **password** (owner of both tenants). The
+login form comes pre-filled while `DEMO_LOGIN_PREFILL=true` — one click to get in.
 
 ## Requirements
 
@@ -79,6 +80,7 @@ Everything specific to multi-tenancy is in these files — the rest is a stock
 | [`database/migrations/tenant/`](database/migrations/tenant) | Runs against **each tenant database**. Holds `projects` only — never `users`/`sessions`. |
 | [`database/seeders/TenantSeeder.php`](database/seeders/TenantSeeder.php) | Tenant-safe seeder run by the provisioning pipeline inside every new tenant DB. |
 | [`database/seeders/DatabaseSeeder.php`](database/seeders/DatabaseSeeder.php) | Demo data: the owner + two tenants, created through `TenantOnboarder` exactly like the wizard does. |
+| [`app/Filament/Pages/Auth/Login.php`](app/Filament/Pages/Auth/Login.php) | Stock Filament login page that pre-fills the demo account (`DEMO_LOGIN_PREFILL`). Not tenancy-related — delete it in your own app. |
 | [`app/Models/Project.php`](app/Models/Project.php), [`app/Filament/Resources/Projects/`](app/Filament/Resources/Projects) | A plain model and resource. Nothing tenant-aware in them — the connection is. |
 | [`tests/TenantTestCase.php`](tests/TenantTestCase.php), [`tests/Feature/TenantSmokeTest.php`](tests/Feature/TenantSmokeTest.php) | Tenant-aware test harness (sync queue, SQLite tenant DBs in a temp dir) and the end-to-end smoke test. |
 
