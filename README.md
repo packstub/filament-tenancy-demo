@@ -30,7 +30,14 @@ Open <http://filament-tenancy-demo.test> — the landing page links everything b
 
 ## What to click
 
-Login: **demo@example.com** / **packstub-tenancy-demo** — pre-filled while `DEMO_LOGIN_PREFILL=true`.
+Two accounts, both with password `packstub-tenancy-demo` (the first is pre-filled while `DEMO_LOGIN_PREFILL=true`):
+
+| Login | Acme | Globex |
+|---|---|---|
+| `demo@example.com` | owner | owner |
+| `viewer@example.com` | owner | member — Projects is read-only, no inviting |
+
+Roles are **per tenant**: they live on the central `tenant_user` pivot (`role` column), and `ProjectPolicy` + the Members page read it through `User::isOwnerOf($tenant)`.
 
 | URL | What it is |
 |---|---|
@@ -39,6 +46,7 @@ Login: **demo@example.com** / **packstub-tenancy-demo** — pre-filled while `DE
 | `globex.filament-tenancy-demo.test/admin` | Tenant **Globex Corp.** — a different database |
 | `…/admin/projects` | An ordinary Filament resource, isolated per tenant |
 | `…/admin/profile` | Rename the workspace, change its slug and avatar |
+| `…/admin/members` | Who's in this workspace; owners invite by email, change roles, remove members |
 | `filament-tenancy-demo.test/central` | **Operator panel** (no tenancy): all tenants, retry provisioning, delete a tenant (drops its DB) |
 
 1. Sign in — you land in Acme's panel.
