@@ -135,21 +135,42 @@ own copy is a short dashboard walk-through:
    central connection and as the template for tenant databases.
 3. **Queue** — *Add compute → Managed queue* (Flex, 256 MiB, 0–1 workers).
    Tenant provisioning runs on it; `aws/aws-sdk-php` is already required.
-4. **Environment variables** — in addition to what Cloud injects:
+4. **Environment variables** — Cloud injects `APP_KEY`, `DB_*` and
+   `QUEUE_CONNECTION=cloud`; add these on top (the last three override injected
+   defaults on purpose):
    ```ini
+   APP_NAME="Packstub Tenancy Demo"
    APP_URL=https://tenancy-demo.example.com
    DEMO_LOGIN_PREFILL=true
    DEMO_RESET_SCHEDULE=true     # hourly demo:reset via the scheduler
-   COMPOSER_AUTH={"http-basic":{"packstub.dev":{"username":"pkg_…","password":"…"}}}
+   PACKSTUB_USER=pkg_xxxxxxxxxxxxxxxx
+   PACKSTUB_SECRET=your-token-secret
+   SESSION_DRIVER=database      # sessions live in the central database
+   CACHE_STORE=database         # the filesystem is ephemeral
    ```
-   (`COMPOSER_AUTH` lets the build pull the plugin from the Packstub registry.)
-5. **Commands** — build: `composer install --no-dev --optimize-autoloader`;
-   deploy: `php artisan migrate --force && php artisan db:seed --force`
-   (the seeder is idempotent). Enable the **scheduler** on the app cluster.
-6. **Domain** — *Network → Add domain* with **wildcard support** enabled, and
-   add the root, `*.` and `_acme-challenge` records Cloud shows you. If the zone
-   is on Cloudflare, keep `_acme-challenge` **DNS-only** (grey cloud). Tenants
-   then resolve at `acme.tenancy-demo.example.com`.
+   `PACKSTUB_USER` / `PACKSTUB_SECRET` are a Packstub access token
+   (dashboard → Access tokens → Create; make a dedicated one for Cloud).
+5. **Commands** — *Settings → Deployments*. Private Composer packages are
+   authenticated with `composer config` in the build step, as the
+   [Cloud docs](https://laravel.com/cloud/docs/environments#private-composer-packages) describe:
+   ```shell
+   # Build
+   composer config http-basic.packstub.dev "$PACKSTUB_USER" "$PACKSTUB_SECRET"
+   composer install --no-dev --optimize-autoloader
+   php artisan optimize
+
+   # Deploy
+   php artisan migrate --force && php artisan db:seed --force
+   ```
+   The seeder is idempotent, so every deploy re-asserts the demo account and
+   the two tenants. Enable the **scheduler** on the app cluster.
+6. **Domain** — *Network → Add domain*: **no redirect**, **wildcard** on,
+   *managed by Cloudflare* if it is, *uninterrupted transfer* on. Cloud first
+   shows two pre-verification records (`TXT _cf-custom-hostname.…` and the
+   permanent `CNAME _acme-challenge.…` that renews the wildcard certificate),
+   then the origin CNAMEs for the root and `*.`. Add all of them **DNS-only**
+   (grey cloud) — Cloud fronts the app with its own edge, so proxying breaks
+   certificate issuance. Tenants then resolve at `acme.tenancy-demo.example.com`.
 
 Deploy, open `/admin`, and you're in. Running it elsewhere? Any host with
 wildcard TLS, a Postgres/MySQL user allowed to `CREATE DATABASE`, and a queue
