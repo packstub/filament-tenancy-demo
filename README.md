@@ -30,7 +30,7 @@ tenants, create a third through the onboarding wizard.
 | `…/admin/profile` | Rename the workspace / change its slug and avatar |
 | `http://filament-tenancy-demo.test/central` | **Operator panel** — central domain only, no tenancy: all tenants with status/domains/members, retry a failed provisioning, delete a tenant (drops its DB), central users |
 
-Demo login: **demo@example.com** / **packstub-tenancy-demo** (owner of both tenants). The
+Demo login: `demo@example.com` / `packstub-tenancy-demo` (owner of both tenants). The
 login form comes pre-filled while `DEMO_LOGIN_PREFILL=true` — one click to get in.
 
 ## Requirements
