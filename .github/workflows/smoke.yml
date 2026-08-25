@@ -40,7 +40,10 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Report resolved versions
-        run: composer show laravel/framework filament/filament stancl/tenancy packstub/filament-tenancy | grep -E '^(name|versions)'
+        run: |
+          for p in laravel/framework filament/filament stancl/tenancy packstub/filament-tenancy; do
+            composer show "$p" | grep -E '^(name|versions)'
+          done
 
       - name: Bootstrap app
         run: |
