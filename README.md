@@ -30,7 +30,7 @@ Open <http://filament-tenancy-demo.test> — the landing page links everything b
 
 ## What to click
 
-Two accounts, both with password `packstub-tenancy-demo` (the first is pre-filled while `DEMO_LOGIN_PREFILL=true`):
+Two accounts, both with password `packstub-tenancy-demo` (while `DEMO_LOGIN_PREFILL=true` the first is pre-filled and the login page has a **Sign in as viewer** button):
 
 | Login | Acme | Globex |
 |---|---|---|

@@ -3,11 +3,12 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Auth\Login;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Livewire\Livewire;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
-class LoginPrefillTest extends TestCase
+class LoginPrefillTest extends TenantTestCase
 {
     public function test_login_form_is_prefilled_when_enabled(): void
     {
@@ -24,6 +25,23 @@ class LoginPrefillTest extends TestCase
     {
         config(['demo.login_prefill' => false]);
 
-        Livewire::test(Login::class)->assertSchemaStateSet(['email' => null]);
+        Livewire::test(Login::class)
+            ->assertSchemaStateSet(['email' => null])
+            ->assertDontSee('Sign in as viewer');
+    }
+
+    public function test_sign_in_as_viewer_shortcut_authenticates_the_viewer(): void
+    {
+        config(['demo.login_prefill' => true]);
+
+        $this->seed(DatabaseSeeder::class);
+
+        Livewire::test(Login::class)
+            ->assertSee('Sign in as viewer')
+            ->call('signInAsViewer')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs(User::query()->where('email', DatabaseSeeder::VIEWER_EMAIL)->firstOrFail());
     }
 }
