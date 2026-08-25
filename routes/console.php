@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Hosted demo: wipe visitor changes and re-seed every hour.
+// Set DEMO_RESET_SCHEDULE=false (default) anywhere you don't want this.
+if (env('DEMO_RESET_SCHEDULE', false)) {
+    Schedule::command('demo:reset')->hourly()->withoutOverlapping();
+}

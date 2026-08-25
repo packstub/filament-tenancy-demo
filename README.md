@@ -9,6 +9,10 @@ and every tenant on its **own database** — no `tenant_id` columns, no global
 scopes. Clone it, run one command, log in, switch between two provisioned
 tenants, create a third through the onboarding wizard.
 
+[![Launch the hosted demo](https://img.shields.io/badge/Launch-hosted%20demo-f59e0b?style=for-the-badge&logo=laravel&logoColor=white)](https://tenancy-demo.packstub.dev/admin)
+[![Deploy on Laravel Cloud](https://img.shields.io/badge/Deploy-Laravel%20Cloud-0a0a0a?style=for-the-badge&logo=laravel&logoColor=white)](#deploy-on-laravel-cloud)
+[![smoke](https://github.com/packstub/filament-tenancy-demo/actions/workflows/smoke.yml/badge.svg)](https://github.com/packstub/filament-tenancy-demo/actions/workflows/smoke.yml)
+
 > This is a reference, not a framework. It stays deliberately small so every
 > file is about one thing: how the plugin plugs into a stock Filament panel.
 > The plugin itself is commercial and is **not** in this repo — it installs
@@ -114,6 +118,42 @@ up here before it reaches you. To run it in your own fork, add a
 ```json
 {"http-basic":{"packstub.dev":{"username":"pkg_xxxxxxxxxxxxxxxx","password":"your-token-secret"}}}
 ```
+
+## Deploy on Laravel Cloud
+
+The hosted demo at <https://tenancy-demo.packstub.dev> runs on
+[Laravel Cloud](https://cloud.laravel.com) — Starter plan, everything scales to
+zero, and the demo resets itself every hour. Laravel Cloud creates apps from a
+connected repository (there is no one-click template URL yet), so deploying your
+own copy is a short dashboard walk-through:
+
+1. **Fork this repo**, then in Laravel Cloud choose *New application → existing
+   repository* and pick the fork.
+2. **Database** — *Add database → Laravel Serverless Postgres* (SQLite is not
+   supported on Cloud's ephemeral filesystem). Every tenant gets its own
+   database inside that cluster; the injected `DB_*` variables are used as the
+   central connection and as the template for tenant databases.
+3. **Queue** — *Add compute → Managed queue* (Flex, 256 MiB, 0–1 workers).
+   Tenant provisioning runs on it; `aws/aws-sdk-php` is already required.
+4. **Environment variables** — in addition to what Cloud injects:
+   ```ini
+   APP_URL=https://tenancy-demo.example.com
+   DEMO_LOGIN_PREFILL=true
+   DEMO_RESET_SCHEDULE=true     # hourly demo:reset via the scheduler
+   COMPOSER_AUTH={"http-basic":{"packstub.dev":{"username":"pkg_…","password":"…"}}}
+   ```
+   (`COMPOSER_AUTH` lets the build pull the plugin from the Packstub registry.)
+5. **Commands** — build: `composer install --no-dev --optimize-autoloader`;
+   deploy: `php artisan migrate --force && php artisan db:seed --force`
+   (the seeder is idempotent). Enable the **scheduler** on the app cluster.
+6. **Domain** — *Network → Add domain* with **wildcard support** enabled, and
+   add the root, `*.` and `_acme-challenge` records Cloud shows you. If the zone
+   is on Cloudflare, keep `_acme-challenge` **DNS-only** (grey cloud). Tenants
+   then resolve at `acme.tenancy-demo.example.com`.
+
+Deploy, open `/admin`, and you're in. Running it elsewhere? Any host with
+wildcard TLS, a Postgres/MySQL user allowed to `CREATE DATABASE`, and a queue
+worker will do — see the plugin's [production guide](https://packstub.dev/docs/filament-tenancy/production).
 
 ## Going further
 
