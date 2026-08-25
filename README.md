@@ -59,7 +59,7 @@ Everything tenancy-specific is in these files; the rest is a stock `laravel new`
 | [`database/migrations/tenant/`](database/migrations/tenant) | Runs against **each tenant database**. Holds `projects` only — never `users`/`sessions`. |
 | [`database/seeders/TenantSeeder.php`](database/seeders/TenantSeeder.php) | Tenant-safe seeder the provisioning pipeline runs inside every new tenant DB. |
 | [`database/seeders/DatabaseSeeder.php`](database/seeders/DatabaseSeeder.php) | Demo data: the owner + two tenants, created through `TenantOnboarder` exactly like the wizard. |
-| [`app/Models/Project.php`](app/Models/Project.php), [`app/Filament/Resources/Projects/`](app/Filament/Resources/Projects) | A plain model and resource. Nothing tenant-aware in them — the connection is. |
+| [`app/Models/Project.php`](app/Models/Project.php), [`app/Filament/Tenant/Resources/Projects/`](app/Filament/Tenant/Resources/Projects) | A plain model and resource. Nothing tenant-aware in them — the connection is. |
 | [`app/Filament/Pages/Auth/Login.php`](app/Filament/Pages/Auth/Login.php) | Stock login page that pre-fills the demo account. Not tenancy-related — delete it in your app. |
 | [`tests/TenantTestCase.php`](tests/TenantTestCase.php), [`tests/Feature/TenantSmokeTest.php`](tests/Feature/TenantSmokeTest.php) | Tenant-aware test harness (sync queue, SQLite tenant DBs in a temp dir) and the end-to-end smoke test. |
 

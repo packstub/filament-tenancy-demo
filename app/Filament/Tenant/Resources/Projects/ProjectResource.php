@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Projects;
+namespace App\Filament\Tenant\Resources\Projects;
 
-use App\Filament\Resources\Projects\Pages\ManageProjects;
+use App\Filament\Tenant\Resources\Projects\Pages\ManageProjects;
 use App\Models\Project;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
