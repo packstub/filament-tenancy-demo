@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "618792132ee93b7decc3b857d8cb0d5a",
+    "content-hash": "edfe0868f94364f6c38831be328172a4",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3991,11 +3991,11 @@
         },
         {
             "name": "packstub/filament-tenancy",
-            "version": "dev-main",
+            "version": "1.0.2",
             "dist": {
-                "type": "path",
-                "url": "../filament-tenancy",
-                "reference": "3054a94693416e322e05a6f41e1e38161b3e3adc"
+                "type": "zip",
+                "url": "https://packstub.dev/dists/packstub/filament-tenancy/1.0.2",
+                "reference": "a62b4b02b1c62e7aca2974074903df8f82eddf58e268a3b28a62e1d065508c2f"
             },
             "require": {
                 "filament/filament": "^5.0",
@@ -4035,17 +4035,17 @@
                 }
             },
             "scripts": {
-                "test": [
-                    "phpunit -c phpunit.xml"
-                ],
-                "test:filter": [
-                    "phpunit -c phpunit.xml --filter"
-                ],
                 "lint": [
                     "vendor/bin/pint"
                 ],
+                "test": [
+                    "phpunit -c phpunit.xml"
+                ],
                 "lint:test": [
                     "vendor/bin/pint --test"
+                ],
+                "test:filter": [
+                    "phpunit -c phpunit.xml --filter"
                 ],
                 "test:multi-server": [
                     "bash tests/bin/multi-server-pg.sh start && (PACKSTUB_POOL_E2E=1 vendor/bin/phpunit -c phpunit.xml --testsuite MultiServerE2E; s=$?; bash tests/bin/multi-server-pg.sh stop; exit $s)"
@@ -4082,14 +4082,11 @@
                 "tenant"
             ],
             "support": {
+                "docs": "https://packstub.dev/docs/tenancy",
                 "email": "support@packstub.dev",
-                "issues": "https://github.com/packstub/filament-tenancy/issues",
-                "docs": "https://packstub.dev/docs/tenancy"
+                "issues": "https://github.com/packstub/filament-tenancy/issues"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-08-25T05:13:36+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
@@ -10779,13 +10776,11 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "packstub/filament-tenancy": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.3"
+        "php": "^8.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"
