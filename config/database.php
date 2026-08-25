@@ -32,6 +32,14 @@ return [
 
     'connections' => [
 
+        // Tenant database pool — three "servers" (sqlite for the demo; in
+        // production these are pgsql/mysql connections on separate hosts).
+        // The 'database' value is a template placeholder — each tenant's
+        // actual sqlite file is derived per tenant by the tenancy manager.
+        'tenant-db-1' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true],
+        'tenant-db-2' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true],
+        'tenant-db-3' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

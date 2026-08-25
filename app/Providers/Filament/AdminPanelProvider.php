@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Packstub\Tenancy\Filament\Widgets\DatabasePoolOverview;
 use Packstub\Tenancy\TenancyPlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -36,6 +37,8 @@ class AdminPanelProvider extends PanelProvider
             // the plugin registers its own central-domain-aware middleware globally.
             ->plugin(
                 TenancyPlugin::make()
+                    ->databasePool(['tenant-db-1', 'tenant-db-2', 'tenant-db-3']) // spread tenant DBs across three "servers"
+                    ->customDomains() // tenant-facing Domains page with DNS verification
                     ->withTenantProfile(), // /admin/profile — rename workspace, change slug/avatar
             )
             ->colors([
@@ -48,6 +51,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Tenant/Widgets'), for: 'App\Filament\Tenant\Widgets')
             ->widgets([
+                DatabasePoolOverview::class,
                 AccountWidget::class,
             ])
             ->middleware([
