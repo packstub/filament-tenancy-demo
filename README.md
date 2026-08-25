@@ -28,6 +28,7 @@ tenants, create a third through the onboarding wizard.
 | `http://globex.filament-tenancy-demo.test/admin` | Tenant **Globex Corp.** — a different database |
 | `…/admin/projects` | An ordinary Filament resource, isolated per tenant |
 | `…/admin/profile` | Rename the workspace / change its slug and avatar |
+| `http://filament-tenancy-demo.test/central` | **Operator panel** — central domain only, no tenancy: all tenants with status/domains/members, retry a failed provisioning, delete a tenant (drops its DB), central users |
 
 Demo login: **demo@example.com** / **packstub-tenancy-demo** (owner of both tenants). The
 login form comes pre-filled while `DEMO_LOGIN_PREFILL=true` — one click to get in.
@@ -78,6 +79,7 @@ Everything specific to multi-tenancy is in these files — the rest is a stock
 | File | Role |
 |---|---|
 | [`app/Providers/Filament/AdminPanelProvider.php`](app/Providers/Filament/AdminPanelProvider.php) | `->plugin(TenancyPlugin::make())` — the one line that wires tenant model, subdomain routing, switcher, onboarding, provisioning page. No stancl middleware in the panel. |
+| [`app/Providers/Filament/CentralPanelProvider.php`](app/Providers/Filament/CentralPanelProvider.php), [`app/Filament/Central/`](app/Filament/Central) | A second panel **without** the plugin, pinned to the central domain with `->domain()`. The plugin never initializes tenancy on the central host, so plain Eloquent here is central data — the pattern for any "operator"/back-office panel next to a tenant panel. |
 | [`app/Models/User.php`](app/Models/User.php) | `CentralConnection` + `HasPackstubTenants`: users, sessions and auth stay in the **central** database. |
 | [`config/packstub-tenancy.php`](config/packstub-tenancy.php) | Plugin config. Only change from the published default: `'seeder' => TenantSeeder::class`. |
 | [`config/tenancy.php`](config/tenancy.php) | stancl config as published by `packstub-tenancy:install` — tenant model set, `DatabaseSessionBootstrapper` left disabled, migrations pointed at `database/migrations/tenant`. |
