@@ -29,7 +29,7 @@ tenants, create a third through the onboarding wizard.
 | `…/admin/projects` | An ordinary Filament resource, isolated per tenant |
 | `…/admin/profile` | Rename the workspace / change its slug and avatar |
 
-Demo login: **demo@example.com** / **password** (owner of both tenants). The
+Demo login: **demo@example.com** / **packstub-tenancy-demo** (owner of both tenants). The
 login form comes pre-filled while `DEMO_LOGIN_PREFILL=true` — one click to get in.
 
 ## Requirements
