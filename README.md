@@ -142,7 +142,7 @@ own copy is a short dashboard walk-through:
    APP_NAME="Packstub Tenancy Demo"
    APP_URL=https://tenancy-demo.example.com
    DEMO_LOGIN_PREFILL=true
-   DEMO_RESET_SCHEDULE=true     # hourly demo:reset via the scheduler
+   # DEMO_RESET_SCHEDULE=true   # public demo only: wipes ALL tenants + data hourly
    PACKSTUB_USER=pkg_xxxxxxxxxxxxxxxx
    PACKSTUB_SECRET=your-token-secret
    SESSION_DRIVER=database      # sessions live in the central database
@@ -163,7 +163,8 @@ own copy is a short dashboard walk-through:
    php artisan migrate --force && php artisan db:seed --force
    ```
    The seeder is idempotent, so every deploy re-asserts the demo account and
-   the two tenants. Enable the **scheduler** on the app cluster.
+   the two tenants. Only if you want the hourly wipe (`DEMO_RESET_SCHEDULE=true`)
+   do you also need the **scheduler** enabled on the app cluster.
 6. **Domain** — *Network → Add domain*: **no redirect**, **wildcard** on,
    *managed by Cloudflare* if it is, *uninterrupted transfer* on. Cloud first
    shows two pre-verification records (`TXT _cf-custom-hostname.…` and the
