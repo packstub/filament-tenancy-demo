@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Models\Project;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Packstub\Tenancy\Models\Tenant;
 use Packstub\Tenancy\Testing\TenantTestHelpers;
-use Tests\TenantTestCase;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\seed;
 
 /**
  * End-to-end smoke test — the same one CI runs against a fresh install of the
@@ -15,58 +15,52 @@ use Tests\TenantTestCase;
  * databases → the owner can open each tenant panel on its subdomain and the
  * Projects table shows only that tenant's rows.
  */
-class TenantSmokeTest extends TenantTestCase
-{
-    use TenantTestHelpers;
+uses(TenantTestHelpers::class);
 
-    public function test_seeder_provisions_two_ready_tenants_with_isolated_databases(): void
-    {
-        $this->seed(DatabaseSeeder::class);
+it('provisions two ready tenants with isolated databases from the seeder', function () {
+    seed(DatabaseSeeder::class);
 
-        $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
-        $tenants = Tenant::query()->orderBy('slug')->get();
+    $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
+    $tenants = Tenant::query()->orderBy('slug')->get();
 
-        $this->assertSame(['acme', 'globex'], $tenants->pluck('slug')->all());
-        $this->assertSame(['ready', 'ready'], $tenants->pluck('status')->all());
-        $this->assertCount(2, $owner->getTenants(filament()->getDefaultPanel()));
+    expect($tenants->pluck('slug')->all())->toBe(['acme', 'globex'])
+        ->and($tenants->pluck('status')->all())->toBe(['ready', 'ready'])
+        ->and($owner->getTenants(filament()->getDefaultPanel()))->toHaveCount(2);
 
-        foreach ($tenants as $tenant) {
-            tenancy()->initialize($tenant);
+    foreach ($tenants as $tenant) {
+        tenancy()->initialize($tenant);
 
-            // TenantSeeder ran inside THIS tenant's database only.
-            $this->assertSame(1, Project::count());
-            $this->assertSame("Welcome to {$tenant->name}", Project::first()->name);
+        // TenantSeeder ran inside THIS tenant's database only.
+        expect(Project::count())->toBe(1)
+            ->and(Project::first()->name)->toBe("Welcome to {$tenant->name}");
 
-            tenancy()->end();
-        }
+        tenancy()->end();
     }
+});
 
-    public function test_owner_can_open_each_tenant_panel_on_its_subdomain(): void
-    {
-        $this->seed(DatabaseSeeder::class);
+it('lets the owner open each tenant panel on its subdomain', function () {
+    seed(DatabaseSeeder::class);
 
-        $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
-        $central = config('packstub-tenancy.central_domain');
+    $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
+    $central = config('packstub-tenancy.central_domain');
 
-        foreach (Tenant::all() as $tenant) {
-            $this->actingAs($owner)
-                ->get("http://{$tenant->slug}.{$central}/admin/projects")
-                ->assertOk()
-                ->assertSee($tenant->name)
-                ->assertSee("Welcome to {$tenant->name}");
-        }
+    foreach (Tenant::all() as $tenant) {
+        actingAs($owner)
+            ->get("http://{$tenant->slug}.{$central}/admin/projects")
+            ->assertOk()
+            ->assertSee($tenant->name)
+            ->assertSee("Welcome to {$tenant->name}");
     }
+});
 
-    public function test_a_new_tenant_starts_with_its_own_empty_projects_table(): void
-    {
-        [$tenant, $user] = $this->createTenantWithUser(['name' => 'Initech', 'slug' => 'initech']);
+it('starts a new tenant with its own empty projects table', function () {
+    [$tenant, $user] = $this->createTenantWithUser(['name' => 'Initech', 'slug' => 'initech']);
 
-        $this->actingAsTenant($tenant, $user);
+    $this->actingAsTenant($tenant, $user);
 
-        $this->assertSame(1, Project::count()); // just the TenantSeeder welcome row
-        Project::create(['name' => 'TPS reports']);
-        $this->assertSame(2, Project::count());
+    expect(Project::count())->toBe(1); // just the TenantSeeder welcome row
+    Project::create(['name' => 'TPS reports']);
+    expect(Project::count())->toBe(2);
 
-        $this->leaveTenant();
-    }
-}
+    $this->leaveTenant();
+});

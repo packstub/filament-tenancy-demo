@@ -1,157 +1,135 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Filament\Tenant\Pages\Members;
 use App\Models\Project;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Filament\Facades\Filament;
-use Livewire\Livewire;
 use Packstub\Tenancy\Models\Tenant;
 use Packstub\Tenancy\Testing\TenantTestHelpers;
-use Tests\TenantTestCase;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\seed;
+use function Pest\Livewire\livewire;
 
 /**
  * Roles are per tenant: the seeded viewer owns Acme but is only a member of
  * Globex. Members read projects; owners also create/edit/delete and manage
  * the workspace's members.
  */
-class MembersAndRolesTest extends TenantTestCase
-{
-    use TenantTestHelpers;
+uses(TenantTestHelpers::class);
 
-    private User $viewer;
+beforeEach(function () {
+    seed(DatabaseSeeder::class);
 
-    private Tenant $acme;
+    $this->viewer = User::query()->where('email', DatabaseSeeder::VIEWER_EMAIL)->firstOrFail();
+    $this->acme = Tenant::query()->where('slug', 'acme')->firstOrFail();
+    $this->globex = Tenant::query()->where('slug', 'globex')->firstOrFail();
+    $this->central = config('packstub-tenancy.central_domain');
+});
 
-    private Tenant $globex;
+it('gives the viewer a different role in each tenant', function () {
+    expect($this->viewer->isOwnerOf($this->acme))->toBeTrue()
+        ->and($this->viewer->isOwnerOf($this->globex))->toBeFalse()
+        ->and($this->viewer->roleIn($this->globex))->toBe('member');
+});
 
-    protected function setUp(): void
-    {
-        parent::setUp();
+it('lets a member view projects but not write them', function () {
+    $this->actingAsTenant($this->globex, $this->viewer);
+    Filament::setTenant($this->globex, isQuiet: true);
 
-        $this->seed(DatabaseSeeder::class);
+    $project = Project::first();
 
-        $this->viewer = User::query()->where('email', DatabaseSeeder::VIEWER_EMAIL)->firstOrFail();
-        $this->acme = Tenant::query()->where('slug', 'acme')->firstOrFail();
-        $this->globex = Tenant::query()->where('slug', 'globex')->firstOrFail();
-    }
+    expect($this->viewer->can('viewAny', Project::class))->toBeTrue()
+        ->and($this->viewer->can('view', $project))->toBeTrue()
+        ->and($this->viewer->can('create', Project::class))->toBeFalse()
+        ->and($this->viewer->can('update', $project))->toBeFalse()
+        ->and($this->viewer->can('delete', $project))->toBeFalse();
 
-    public function test_viewer_has_a_different_role_in_each_tenant(): void
-    {
-        $this->assertTrue($this->viewer->isOwnerOf($this->acme));
-        $this->assertFalse($this->viewer->isOwnerOf($this->globex));
-        $this->assertSame('member', $this->viewer->roleIn($this->globex));
-    }
+    $this->leaveTenant();
+});
 
-    public function test_member_can_view_projects_but_not_write_them(): void
-    {
-        $this->actingAsTenant($this->globex, $this->viewer);
-        Filament::setTenant($this->globex, isQuiet: true);
+it('lets an owner write projects', function () {
+    $this->actingAsTenant($this->acme, $this->viewer);
+    Filament::setTenant($this->acme, isQuiet: true);
 
-        $project = Project::first();
+    expect($this->viewer->can('create', Project::class))->toBeTrue()
+        ->and($this->viewer->can('update', Project::first()))->toBeTrue();
 
-        $this->assertTrue($this->viewer->can('viewAny', Project::class));
-        $this->assertTrue($this->viewer->can('view', $project));
-        $this->assertFalse($this->viewer->can('create', Project::class));
-        $this->assertFalse($this->viewer->can('update', $project));
-        $this->assertFalse($this->viewer->can('delete', $project));
+    $this->leaveTenant();
+});
 
-        $this->leaveTenant();
-    }
+it('hides write actions on the projects page from a member', function () {
+    actingAs($this->viewer)
+        ->get("http://globex.{$this->central}/admin/projects")
+        ->assertOk()
+        ->assertSee('Welcome to Globex Corp.')
+        ->assertDontSee('New project');
 
-    public function test_owner_can_write_projects(): void
-    {
-        $this->actingAsTenant($this->acme, $this->viewer);
-        Filament::setTenant($this->acme, isQuiet: true);
+    actingAs($this->viewer)
+        ->get("http://acme.{$this->central}/admin/projects")
+        ->assertOk()
+        ->assertSee('New project');
+});
 
-        $this->assertTrue($this->viewer->can('create', Project::class));
-        $this->assertTrue($this->viewer->can('update', Project::first()));
+it('lists members and only lets owners invite', function () {
+    actingAs($this->viewer)
+        ->get("http://globex.{$this->central}/admin/members")
+        ->assertOk()
+        ->assertSee(DatabaseSeeder::DEMO_EMAIL)
+        ->assertSee(DatabaseSeeder::VIEWER_EMAIL)
+        ->assertDontSee('Invite member');
 
-        $this->leaveTenant();
-    }
+    actingAs($this->viewer)
+        ->get("http://acme.{$this->central}/admin/members")
+        ->assertOk()
+        ->assertSee('Invite member');
+});
 
-    public function test_projects_page_hides_write_actions_from_a_member(): void
-    {
-        $central = config('packstub-tenancy.central_domain');
+it('lets an owner invite a new email and an existing user', function () {
+    $this->actingAsTenant($this->acme, $this->viewer);
+    Filament::setTenant($this->acme, isQuiet: true);
 
-        $this->actingAs($this->viewer)
-            ->get("http://globex.{$central}/admin/projects")
-            ->assertOk()
-            ->assertSee('Welcome to Globex Corp.')
-            ->assertDontSee('New project');
+    livewire(Members::class)
+        ->callAction('invite', ['email' => 'new@example.com', 'role' => 'member'])
+        ->assertHasNoActionErrors()
+        ->assertNotified();
 
-        $this->actingAs($this->viewer)
-            ->get("http://acme.{$central}/admin/projects")
-            ->assertOk()
-            ->assertSee('New project');
-    }
+    $invited = User::query()->where('email', 'new@example.com')->firstOrFail();
+    expect($invited->roleIn($this->acme))->toBe('member')
+        ->and($invited->roleIn($this->globex))->toBeNull();
 
-    public function test_members_page_lists_members_and_only_owners_can_invite(): void
-    {
-        $central = config('packstub-tenancy.central_domain');
+    // An existing central account is attached, not duplicated.
+    $existing = User::factory()->create(['email' => 'existing@example.com']);
 
-        $this->actingAs($this->viewer)
-            ->get("http://globex.{$central}/admin/members")
-            ->assertOk()
-            ->assertSee(DatabaseSeeder::DEMO_EMAIL)
-            ->assertSee(DatabaseSeeder::VIEWER_EMAIL)
-            ->assertDontSee('Invite member');
+    livewire(Members::class)
+        ->callAction('invite', ['email' => 'existing@example.com', 'role' => Tenant::ROLE_OWNER])
+        ->assertHasNoActionErrors();
 
-        $this->actingAs($this->viewer)
-            ->get("http://acme.{$central}/admin/members")
-            ->assertOk()
-            ->assertSee('Invite member');
-    }
+    expect(User::query()->where('email', 'existing@example.com')->count())->toBe(1)
+        ->and($existing->fresh()->isOwnerOf($this->acme))->toBeTrue();
 
-    public function test_owner_can_invite_a_new_email_and_an_existing_user(): void
-    {
-        $this->actingAsTenant($this->acme, $this->viewer);
-        Filament::setTenant($this->acme, isQuiet: true);
+    $this->leaveTenant();
+});
 
-        Livewire::test(Members::class)
-            ->callAction('invite', ['email' => 'new@example.com', 'role' => 'member'])
-            ->assertHasNoActionErrors()
-            ->assertNotified();
+it('lets an owner change a role and remove a member', function () {
+    $this->actingAsTenant($this->acme, $this->viewer);
+    Filament::setTenant($this->acme, isQuiet: true);
 
-        $invited = User::query()->where('email', 'new@example.com')->firstOrFail();
-        $this->assertSame('member', $invited->roleIn($this->acme));
-        $this->assertNull($invited->roleIn($this->globex));
+    $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
 
-        // An existing central account is attached, not duplicated.
-        $existing = User::factory()->create(['email' => 'existing@example.com']);
+    livewire(Members::class)
+        ->callTableAction('changeRole', $owner, ['role' => 'member'])
+        ->assertHasNoTableActionErrors();
 
-        Livewire::test(Members::class)
-            ->callAction('invite', ['email' => 'existing@example.com', 'role' => Tenant::ROLE_OWNER])
-            ->assertHasNoActionErrors();
+    expect($owner->fresh()->roleIn($this->acme))->toBe('member');
 
-        $this->assertSame(1, User::query()->where('email', 'existing@example.com')->count());
-        $this->assertTrue($existing->fresh()->isOwnerOf($this->acme));
+    livewire(Members::class)
+        ->callTableAction('remove', $owner)
+        ->assertHasNoTableActionErrors();
 
-        $this->leaveTenant();
-    }
+    expect($owner->fresh()->roleIn($this->acme))->toBeNull()
+        ->and($owner->fresh()->isOwnerOf($this->globex))->toBeTrue(); // untouched
 
-    public function test_owner_can_change_role_and_remove_a_member(): void
-    {
-        $this->actingAsTenant($this->acme, $this->viewer);
-        Filament::setTenant($this->acme, isQuiet: true);
-
-        $owner = User::query()->where('email', DatabaseSeeder::DEMO_EMAIL)->firstOrFail();
-
-        Livewire::test(Members::class)
-            ->callTableAction('changeRole', $owner, ['role' => 'member'])
-            ->assertHasNoTableActionErrors();
-
-        $this->assertSame('member', $owner->fresh()->roleIn($this->acme));
-
-        Livewire::test(Members::class)
-            ->callTableAction('remove', $owner)
-            ->assertHasNoTableActionErrors();
-
-        $this->assertNull($owner->fresh()->roleIn($this->acme));
-        $this->assertTrue($owner->fresh()->isOwnerOf($this->globex)); // untouched
-
-        $this->leaveTenant();
-    }
-}
+    $this->leaveTenant();
+});

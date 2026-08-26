@@ -1,47 +1,41 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Filament\Pages\Auth\Login;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Livewire\Livewire;
-use Tests\TenantTestCase;
 
-class LoginPrefillTest extends TenantTestCase
-{
-    public function test_login_form_is_prefilled_when_enabled(): void
-    {
-        config(['demo.login_prefill' => true]);
+use function Pest\Laravel\assertAuthenticatedAs;
+use function Pest\Laravel\seed;
+use function Pest\Livewire\livewire;
 
-        Livewire::test(Login::class)
-            ->assertSchemaStateSet([
-                'email' => DatabaseSeeder::DEMO_EMAIL,
-                'password' => DatabaseSeeder::DEMO_PASSWORD,
-            ]);
-    }
+it('prefills the login form when enabled', function () {
+    config(['demo.login_prefill' => true]);
 
-    public function test_login_form_is_empty_when_disabled(): void
-    {
-        config(['demo.login_prefill' => false]);
+    livewire(Login::class)
+        ->assertSchemaStateSet([
+            'email' => DatabaseSeeder::DEMO_EMAIL,
+            'password' => DatabaseSeeder::DEMO_PASSWORD,
+        ]);
+});
 
-        Livewire::test(Login::class)
-            ->assertSchemaStateSet(['email' => null])
-            ->assertDontSee('Sign in as viewer');
-    }
+it('leaves the login form empty when disabled', function () {
+    config(['demo.login_prefill' => false]);
 
-    public function test_sign_in_as_viewer_shortcut_authenticates_the_viewer(): void
-    {
-        config(['demo.login_prefill' => true]);
+    livewire(Login::class)
+        ->assertSchemaStateSet(['email' => null])
+        ->assertDontSee('Sign in as viewer');
+});
 
-        $this->seed(DatabaseSeeder::class);
+it('authenticates the viewer through the sign-in-as-viewer shortcut', function () {
+    config(['demo.login_prefill' => true]);
 
-        Livewire::test(Login::class)
-            ->assertSee('Sign in as viewer')
-            ->call('signInAsViewer')
-            ->assertHasNoErrors()
-            ->assertRedirect();
+    seed(DatabaseSeeder::class);
 
-        $this->assertAuthenticatedAs(User::query()->where('email', DatabaseSeeder::VIEWER_EMAIL)->firstOrFail());
-    }
-}
+    livewire(Login::class)
+        ->assertSee('Sign in as viewer')
+        ->call('signInAsViewer')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    assertAuthenticatedAs(User::query()->where('email', DatabaseSeeder::VIEWER_EMAIL)->firstOrFail());
+});
