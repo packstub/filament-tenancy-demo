@@ -111,7 +111,7 @@
         .card.db .eyebrow { color: var(--accent-deep); }
         .card.db .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
         .card h3 { font-size: 17px; letter-spacing: -0.01em; }
-        .card p { color: var(--muted); font-size: 14.5px; flex: 1; }
+        .card p:not(.eyebrow) { color: var(--muted); font-size: 14.5px; flex: 1; }
         .card .link { font-family: var(--mono); font-size: 12.5px; color: var(--accent-deep); overflow-wrap: anywhere; }
         .card:hover .link { text-decoration: underline; }
 
