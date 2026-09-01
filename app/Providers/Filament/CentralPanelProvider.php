@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Central\Widgets\TenantStats;
+use App\Filament\InitialsAvatarProvider;
 use App\Filament\Pages\Auth\Login;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Packstub\Tenancy\Filament\Widgets\DatabasePoolOverview;
 
 /**
  * The "operator" panel: lives ONLY on the central domain and has no tenancy
@@ -39,6 +41,7 @@ class CentralPanelProvider extends PanelProvider
             ->domain(config('packstub-tenancy.central_domain'))
             ->login(Login::class) // same pre-filled demo login as the admin panel
             ->brandName('Tenancy Demo · Operator')
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors([
                 'primary' => Color::Sky,
             ])
@@ -50,6 +53,7 @@ class CentralPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Central/Widgets'), for: 'App\Filament\Central\Widgets')
             ->widgets([
                 TenantStats::class,
+                DatabasePoolOverview::class, // pool balance is operator data, not something a tenant sees
                 AccountWidget::class,
             ])
             ->middleware([
