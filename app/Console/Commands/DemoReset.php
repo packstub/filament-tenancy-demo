@@ -7,7 +7,7 @@ use Packstub\Tenancy\Models\Tenant;
 
 /**
  * Wipes everything visitors did on the hosted demo and re-seeds it.
- * Scheduled hourly in routes/console.php; harmless to run locally.
+ * Scheduled daily in routes/console.php; harmless to run locally.
  *
  * Tenants are deleted first: deleting a tenant row fires stancl's
  * TenantDeleted → DeleteDatabase pipeline, so their databases go away too

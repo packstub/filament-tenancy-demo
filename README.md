@@ -95,7 +95,7 @@ php artisan test
 
 ## Deploy on Laravel Cloud
 
-The hosted demo runs on [Laravel Cloud](https://cloud.laravel.com) (Starter plan, scales to zero, resets hourly). Cloud creates apps from a connected repository, so deploying your own copy is a short dashboard walk-through:
+The hosted demo runs on [Laravel Cloud](https://cloud.laravel.com) (Starter plan, scales to zero, resets daily). Cloud creates apps from a connected repository, so deploying your own copy is a short dashboard walk-through:
 
 1. **Fork this repo**, then *New application → existing repository*.
 2. **Database** — *Add database → Laravel Serverless Postgres* (SQLite isn't available on Cloud's ephemeral filesystem). Every tenant gets its own database inside that cluster; the injected `DB_*` variables serve as the central connection and the template for tenant databases.
@@ -105,12 +105,14 @@ The hosted demo runs on [Laravel Cloud](https://cloud.laravel.com) (Starter plan
    APP_NAME="Packstub Tenancy Demo"
    APP_URL=https://tenancy-demo.example.com
    DEMO_LOGIN_PREFILL=true
-   # DEMO_RESET_SCHEDULE=true   # public demo only: wipes ALL tenants hourly (needs the scheduler)
+   # DEMO_RESET_SCHEDULE=true   # public demo only: wipes ALL tenants daily (needs the scheduler)
    PACKSTUB_USER=pkg_xxxxxxxxxxxxxxxx
    PACKSTUB_SECRET=your-token-secret
-   SESSION_DRIVER=database      # sessions live in the central database
-   CACHE_STORE=database         # the filesystem is ephemeral
    ```
+   Cloud injects `SESSION_DRIVER=cookie` and `CACHE_STORE=database` by default — change
+   `CACHE_STORE` to `file` so ordinary page views never wake Serverless Postgres, which is
+   billed per awake hour. The file cache is per-instance and wiped on deploy — fine for a demo
+   that re-seeds anyway.
 5. **Commands** — *Settings → Deployments* ([Cloud docs on private packages](https://laravel.com/cloud/docs/environments#private-composer-packages)):
    ```shell
    # Build

@@ -180,7 +180,7 @@
                     </div>
                 @endif
                 @if ($resets)
-                    <p class="note" data-reveal style="--d:.34s">Shared playground — everything resets every hour, so create, rename, and delete freely.</p>
+                    <p class="note" data-reveal style="--d:.34s">Shared playground — everything resets once a day, so create, rename, and delete freely.</p>
                 @endif
             </div>
             <div data-reveal style="--d:.2s">
